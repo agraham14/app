@@ -48,8 +48,6 @@ class CreateWiki {
 	const CREATEWIKI_LOGO      = "http://images.wikia.com/central/images/2/22/Wiki_Logo_Template.png";
 	const DEFAULT_STAFF        = "Wikia";
 	const DEFAULT_USER         = 'Default';
-	const DEFAULT_DOMAIN       = "wikia.com";
-	const ACTIVE_CLUSTER       = "c7";
 	const DEFAULT_SLOT         = "slot1";
 	const DEFAULT_NAME         = "Wiki";
 	const DEFAULT_WIKI_TYPE    = "";
@@ -595,7 +593,9 @@ class CreateWiki {
 	 * @return
 	 */
 	private function fixSubdomains() {
-		$this->mDefSubdomain = self::DEFAULT_DOMAIN;
+		global $wgWikiaBaseDomain;
+
+		$this->mDefSubdomain = $wgWikiaBaseDomain;
 		$this->mDefSitename = self::DEFAULT_NAME;
 		$this->mDomains = array('default' => '');
 		$this->mSitenames = array();
