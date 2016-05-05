@@ -163,7 +163,7 @@ class CreateWiki {
 	 * @throw CreateWikiException an exception with status of operation set
 	 */
 	public function create() {
-		global $wgExternalSharedDB, $wgSharedDB, $wgUser;
+		global $wgExternalSharedDB, $wgSharedDB, $wgUser, $wgWikiaCreateNewWikiActiveCluster;
 
 		$then = microtime( true );
 
@@ -224,14 +224,14 @@ class CreateWiki {
 		// set $activeCluster to false if you want to create wikis on first
 		// cluster
 		//
-		$this->mClusterDB = ( self::ACTIVE_CLUSTER ) ? "wikicities_" . self::ACTIVE_CLUSTER : "wikicities";
+		$this->mClusterDB = ( $wgWikiaCreateNewWikiActiveCluster ) ? "wikicities_" . $wgWikiaCreateNewWikiActiveCluster : "wikicities";
 		$this->mNewWiki->dbw = wfGetDB( DB_MASTER, array(), $this->mClusterDB ); // database handler, old $dbwTarget
 
 		// SUS-108: check read-only state of ACTIVE_CLUSTER before performing any DB-related actions
 		$readOnlyReason = $this->mNewWiki->dbw->getLBInfo( 'readOnlyReason' );
 		if ( $readOnlyReason !== false ) {
 			wfProfileOut( __METHOD__ );
-			throw new CreateWikiException( sprintf( '%s is in read-only mode: %s', self::ACTIVE_CLUSTER, $readOnlyReason ), self::ERROR_READONLY );
+			throw new CreateWikiException( sprintf( '%s is in read-only mode: %s', $wgWikiaCreateNewWikiActiveCluster, $readOnlyReason ), self::ERROR_READONLY );
 		}
 
 		// check if database is creatable
@@ -840,6 +840,7 @@ class CreateWiki {
 	 *
 	 */
 	private function addToCityList() {
+		global $wgWikiaCreateNewWikiActiveCluster;
 		$insertFields = array(
 			'city_title'          => $this->mNewWiki->sitename,
 			'city_dbname'         => $this->mNewWiki->dbname,
@@ -853,8 +854,8 @@ class CreateWiki {
 			'city_created'        => wfTimestamp( TS_DB, time() ),
 			'city_umbrella'       => $this->mNewWiki->umbrella,
 		);
-		if ( self::ACTIVE_CLUSTER ) {
-			$insertFields[ "city_cluster" ] = self::ACTIVE_CLUSTER;
+		if ( !empty($wgWikiaCreateNewWikiActiveCluster) ) {
+			$insertFields[ "city_cluster" ] = $wgWikiaCreateNewWikiActiveCluster;
 		}
 
 		$res = $this->mDBw->insert( "city_list", $insertFields, __METHOD__ );
@@ -940,6 +941,7 @@ class CreateWiki {
 	 *
 	 */
 	private function setWFVariables() {
+		global $wgWikiaCreateNewWikiActiveCluster;
 		// WF Variables containter
 		$this->mWFSettingVars = array();
 
@@ -965,8 +967,8 @@ class CreateWiki {
 			$this->mWFSettingVars['wgMetaNamespace'] = str_replace( array( ':', ' ' ), array( '', '_' ), $this->mWFSettingVars['wgSitename'] );
 		}
 
-		if ( self::ACTIVE_CLUSTER ) {
-			wfGetLBFactory()->sectionsByDB[ $this->mNewWiki->dbname ] = $this->mWFSettingVars['wgDBcluster'] = self::ACTIVE_CLUSTER;
+		if ( !empty($wgWikiaCreateNewWikiActiveCluster) ) {
+			wfGetLBFactory()->sectionsByDB[ $this->mNewWiki->dbname ] = $this->mWFSettingVars['wgDBcluster'] = $wgWikiaCreateNewWikiActiveCluster;
 		}
 
 		$oRes = $this->mDBw->select(
